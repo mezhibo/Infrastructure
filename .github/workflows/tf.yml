@@ -41,8 +41,15 @@ jobs:
       - name: Terraform Plan
         run: terraform plan -var="yc_token=${{ secrets.YC_TOKEN }}"
 
-      # Шаг 6 (опционально): Применение изменений (terraform apply)
+      # # Шаг 6 (опционально): Применение изменений (terraform apply)
+      # # Этот шаг можно включить только для ветки main.
+      # - name: Terraform Apply
+      #   if: github.ref == 'refs/heads/main'
+      #   run: terraform apply -auto-approve -var="yc_token=${{ secrets.YC_TOKEN }}"
+
+
+      # Шаг 7 (опционально): Применение изменений (terraform apply)
       # Этот шаг можно включить только для ветки main.
-      - name: Terraform Apply
+      - name: Terraform Destroy
         if: github.ref == 'refs/heads/main'
-        run: terraform apply -auto-approve -var="yc_token=${{ secrets.YC_TOKEN }}"
+        run: terraform destroy -auto-approve -var="yc_token=${{ secrets.YC_TOKEN }}"
