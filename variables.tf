@@ -1,1 +1,1 @@
-variable "YC_TOKEN" {}
+variable "yc_token" {}
