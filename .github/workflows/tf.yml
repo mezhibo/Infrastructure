@@ -48,8 +48,8 @@ jobs:
       #   run: terraform apply -auto-approve -var="yc_token=${{ secrets.YC_TOKEN }}"
 
 
-      # Шаг 7 (опционально): Применение изменений (terraform apply)
-      # Этот шаг можно включить только для ветки main.
-      - name: Terraform Destroy
-        if: github.ref == 'refs/heads/main'
-        run: terraform destroy -auto-approve -var="yc_token=${{ secrets.YC_TOKEN }}"
+      # # Шаг 7 (опционально): Применение изменений (terraform apply)
+      # # Этот шаг можно включить только для ветки main.
+      # - name: Terraform Destroy
+      #   if: github.ref == 'refs/heads/main'
+      #   run: terraform destroy -auto-approve -var="yc_token=${{ secrets.YC_TOKEN }}"
