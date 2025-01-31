@@ -1,4 +1,5 @@
 #cloud vars
+variable "yc_token" {}
 
 variable "cloud_id" {
   type        = string
