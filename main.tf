@@ -9,7 +9,7 @@ terraform {
 provider "yandex" {
   cloud_id  = "b1gvqb4s3f495f55ih0b"
   folder_id = "b1glq93bir0j2f0sl892"
-  token     = var.yc_token
+  token     = var.YC_TOKEN
 }
 
 resource "yandex_compute_instance" "vm" {
