@@ -1,98 +1,112 @@
-name: Terraform Yandex Cloud Pipeline
+name: Terraform CI/CD for Yandex Cloud
 
 on:
   push:
     branches:
-      - main # Автоматический запуск при пуше в ветку main
-  workflow_dispatch: # Возможность ручного запуска для apply и destroy
+      - main
+  pull_request:
 
-env:
-  TF_IN_AUTOMATION: "true" # Указывает Terraform, что он работает в автоматическом режиме
-  TF_INPUT: "false"        # Отключает запросы ввода от пользователя
+  # Добавляем возможность ручного запуска для apply и destroy
+  workflow_dispatch:
 
 jobs:
-  init_and_plan:
+  terraform-init-plan:
     name: Terraform Init and Plan
     runs-on: ubuntu-latest
+
     steps:
-      # Шаг 1: Клонируем репозиторий
-      - name: Checkout Code
+      # Шаг 1: Клонирование репозитория
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      # Шаг 2: Устанавливаем Terraform
+      # Шаг 2: Установка Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.7 # Укажите версию Terraform
+          terraform_version: 1.5.6 # Укажите вашу версию Terraform
 
-      # Шаг 3: Настраиваем переменные окружения для Yandex Cloud
-      - name: Configure Yandex Cloud Credentials
+      # Шаг 3: Настройка переменных окружения для Yandex Cloud
+      - name: Set up environment variables
+        env:
+          YC_TOKEN: ${{ secrets.YC_TOKEN }}
+          YC_CLOUD_ID: ${{ secrets.YC_CLOUD_ID }}
+          YC_FOLDER_ID: ${{ secrets.YC_FOLDER_ID }}
         run: |
-          export YC_TOKEN=${{ secrets.YC_TOKEN }}
-          export YC_CLOUD_ID=${{ secrets.YC_CLOUD_ID }}
-          export YC_FOLDER_ID=${{ secrets.YC_FOLDER_ID }}
+          echo "export TF_VAR_yc_token=${{ secrets.YC_TOKEN }}" >> $GITHUB_ENV
+          echo "export TF_VAR_yc_cloud_id=${{ secrets.YC_CLOUD_ID }}" >> $GITHUB_ENV
+          echo "export TF_VAR_yc_folder_id=${{ secrets.YC_FOLDER_ID }}" >> $GITHUB_ENV
 
       # Шаг 4: Инициализация Terraform
       - name: Terraform Init
         run: terraform init
 
-      # Шаг 5: Генерация плана изменений
+      # Шаг 5: Планирование изменений (terraform plan)
       - name: Terraform Plan
-        run: terraform plan -out=plan.tfplan
+        run: terraform plan
 
-      # Шаг 6: Сохранение файла плана как артефакта
-      - name: Upload Plan Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan
-          path: plan.tfplan
-
-  apply:
-    name: Terraform Apply
+  terraform-apply:
+    name: Terraform Apply (Manual Trigger)
     runs-on: ubuntu-latest
-    needs: init_and_plan # Эта задача зависит от успешного выполнения init_and_plan
-    if: ${{ github.event_name == 'workflow_dispatch' }} # Запуск только вручную
+    needs: terraform-init-plan # Зависит от выполнения init и plan
+
+    # Запускается только вручную через workflow_dispatch
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+
     steps:
-      - name: Checkout Code
+      # Шаг 1: Клонирование репозитория
+      - name: Checkout code
         uses: actions/checkout@v3
 
+      # Шаг 2: Установка Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.7
+          terraform_version: 1.5.6
 
-      - name: Configure Yandex Cloud Credentials
+      # Шаг 3: Настройка переменных окружения для Yandex Cloud
+      - name: Set up environment variables
+        env:
+          YC_TOKEN: ${{ secrets.YC_TOKEN }}
+          YC_CLOUD_ID: ${{ secrets.YC_CLOUD_ID }}
+          YC_FOLDER_ID: ${{ secrets.YC_FOLDER_ID }}
         run: |
-          export YC_TOKEN=${{ secrets.YC_TOKEN }}
-          export YC_CLOUD_ID=${{ secrets.YC_CLOUD_ID }}
-          export YC_FOLDER_ID=${{ secrets.YC_FOLDER_ID }}
+          echo "export TF_VAR_yc_token=${{ secrets.YC_TOKEN }}" >> $GITHUB_ENV
+          echo "export TF_VAR_yc_cloud_id=${{ secrets.YC_CLOUD_ID }}" >> $GITHUB_ENV
+          echo "export TF_VAR_yc_folder_id=${{ secrets.YC_FOLDER_ID }}" >> $GITHUB_ENV
 
-      - name: Download Plan Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-plan
-
+      # Шаг 4: Применение изменений (terraform apply)
       - name: Terraform Apply
-        run: terraform apply plan.tfplan
+        run: terraform apply -auto-approve
 
-  destroy:
-    name: Terraform Destroy
+  terraform-destroy:
+    name: Terraform Destroy (Manual Trigger)
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' }} # Запуск только вручную
+
+    # Запускается только вручную через workflow_dispatch
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+
     steps:
-      - name: Checkout Code
+      # Шаг 1: Клонирование репозитория
+      - name: Checkout code
         uses: actions/checkout@v3
 
+      # Шаг 2: Установка Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.7
+          terraform_version: 1.5.6
 
-      - name: Configure Yandex Cloud Credentials
+      # Шаг 3: Настройка переменных окружения для Yandex Cloud
+      - name: Set up environment variables
+        env:
+          YC_TOKEN: ${{ secrets.YC_TOKEN }}
+          YC_CLOUD_ID: ${{ secrets.YC_CLOUD_ID }}
+          YC_FOLDER_ID: ${{ secrets.YC_FOLDER_ID }}
         run: |
-          export YC_TOKEN=${{ secrets.YC_TOKEN }}
-          export YC_CLOUD_ID=${{ secrets.YC_CLOUD_ID }}
-          export YC_FOLDER_ID=${{ secrets.YC_FOLDER_ID }}
+          echo "export TF_VAR_yc_token=${{ secrets.YC_TOKEN }}" >> $GITHUB_ENV
+          echo "export TF_VAR_yc_cloud_id=${{ secrets.YC_CLOUD_ID }}" >> $GITHUB_ENV
+          echo "export TF_VAR_yc_folder_id=${{ secrets.YC_FOLDER_ID }}" >> $GITHUB_ENV
 
+      # Шаг 4: Уничтожение инфраструктуры (terraform destroy)
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve # Удаление инфраструктуры без подтверждения
+        run: terraform destroy -auto-approve
